@@ -17,12 +17,18 @@ object CommunityBuildRunner:
    *  for more infrastructural details.
    */
   extension (self: CommunityProject) def run()(using suite: CommunityBuildRunner): Unit =
+    log(s"[STARTING ${self.project}]")
     if self.requiresExperimental && !compilerSupportExperimental then
       log(s"Skipping ${self.project} - it needs experimental features unsupported in this build.")
       return
     self.dependencies.foreach(_.publish())
     self.testOnlyDependencies().foreach(_.publish())
-    suite.runProject(self)
+    log(s"[DEPENDENCIES DONE, NOW ACTUALLY RUNNING ${self.project}]")
+    try {
+      suite.runProject(self)
+    } finally {
+      log(s"[${self.project} DONE RUNNING]")
+    }
 
 trait CommunityBuildRunner:
 
@@ -71,6 +77,11 @@ trait CommunityBuildRunner:
         |""".stripMargin)
 
     val testsCompletedSuccessfully = execTimes(projectDef.build, 3)
+
+    if(testsCompletedSuccessfully)
+      log(s"[SUCCESS ${projectDef.project}]")
+    else
+      log(s"[FAILURE ${projectDef.project}]")
 
     if !testsCompletedSuccessfully then
       failWith(s"""

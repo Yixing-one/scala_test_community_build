@@ -140,7 +140,7 @@ final case class SbtCommunityProject(
       case Some(ivyHome) => List(s"-Dsbt.ivy.home=$ivyHome")
       case _ => Nil
     extraSbtArgs ++ sbtProps ++ List(
-      "-sbt-version", "1.8.2",
+      "-sbt-version", "1.8.0",
       "-Dsbt.supershell=false",
       s"-Ddotty.communitybuild.dir=$communitybuildDir",
       s"--addPluginSbtFile=$sbtPluginFilePath"
@@ -150,6 +150,9 @@ object SbtCommunityProject:
   def scalacOptions = List(
     "-Xcheck-macros",
     "-Ysafe-init",
+    //"-Yexplicit-nulls",
+    //"-language:unsafeNulls",
+    //"-Yflexible-types",
   )
 
 object projects:
@@ -372,7 +375,8 @@ object projects:
     sbtTestCommand = """set deriving/scalacOptions -= "-Xfatal-warnings"; set typeable/scalacOptions -= "-Xfatal-warnings"; test""",
       // selectively disable -Xfatal-warnings due to deprecations
     sbtDocCommand = forceDoc("typeable", "deriving", "data"),
-    scalacOptions = Nil // disable -Ysafe-init, due to -Xfatal-warnings
+    scalacOptions = SbtCommunityProject.scalacOptions.filter(_ != "-Ysafe-init").filter(_ != "-Xcheck-macros")
+    //scalacOptions = Nil // disable -Ysafe-init, due to -Xfatal-warnings
   )
 
   lazy val xmlInterpolator = SbtCommunityProject(
@@ -682,7 +686,8 @@ object projects:
     sbtTestCommand = "runCommunityBuild",
     sbtPublishCommand = "publishLocal",
     dependencies = List(scalatest),
-    scalacOptions = List("-language:implicitConversions"), // disabled -Ysafe-init, due to bug in macro
+    scalacOptions = "-language:implicitConversions" :: SbtCommunityProject.scalacOptions.filter(_ != "-Ysafe-init"),
+    //scalacOptions = List("-language:implicitConversions"), // disabled -Ysafe-init, due to bug in macro
   )
 
   lazy val onnxScala = SbtCommunityProject(
